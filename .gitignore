@@ -1,0 +1,8 @@
+release/
+node_modules/
+__pycache__/
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db

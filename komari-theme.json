@@ -1,0 +1,27 @@
+{
+  "name": "Aero · 晴空",
+  "short": "aero",
+  "description": "Apple 风格浅色监控主题，含动态地球、实时双向流量趋势、完整服务器详情、多指标历史和线路质量。适配 Komari 1.5.1。",
+  "version": "1.4.1",
+  "author": "Shell (biliblihuorong)",
+  "configuration": {
+    "type": "managed",
+    "name": "晴空主题设置",
+    "data": [
+      {
+        "key": "headline",
+        "name": "页面标题",
+        "type": "string",
+        "default": "服务器状态"
+      },
+      {
+        "key": "subtitle",
+        "name": "页面说明",
+        "type": "string",
+        "default": ""
+      }
+    ]
+  },
+  "url": "https://github.com/biliblihuorong/komari-theme-aero",
+  "preview": "preview.png"
+}

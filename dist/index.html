@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A simple server monitor tool.">
+  <meta name="theme-color" content="#f5f7fa">
+  <title>Komari Monitor</title>
+  <link rel="icon" href="/favicon.ico">
+  <script src="/themes/aero/dist/assets/appearance.js"></script>
+  <link rel="stylesheet" href="/themes/aero/dist/assets/style.css">
+  <script type="module" src="/themes/aero/dist/assets/app.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">跳到节点列表</a>
+<div class="page">
+  <header class="topbar"><a class="site-brand" href="/" aria-label="站点首页"><img id="site-avatar" src="/favicon.ico" alt="" width="44" height="44"><span id="site-name">监测站</span></a><div class="top-actions"><div id="appearance" class="appearance-switch" role="group" aria-label="外观模式"><button type="button" data-appearance-mode="light" aria-label="浅色模式" title="浅色模式" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button><button type="button" data-appearance-mode="dark" aria-label="深色模式" title="深色模式" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.4 14.3A8.5 8.5 0 0 1 9.7 3.6 8.5 8.5 0 1 0 20.4 14.3Z"/></svg></button><button type="button" data-appearance-mode="auto" aria-label="跟随系统" title="跟随系统" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></button></div><span id="connection" class="connection" role="status">正在连接</span><button id="refresh" class="icon-button" aria-label="立即刷新" title="立即刷新">↻</button><a class="admin-button" href="/admin">控制台 <span aria-hidden="true">↗</span></a></div></header>
+  <main id="main">
+    <section class="intro"><div><h1 id="headline">服务器状态</h1><p id="subtitle">实时查看节点资源与网络状态。</p></div><div class="date-block"><span id="date"></span><strong id="clock">—</strong><span>本地时间</span></div></section>
+    <div id="error" class="error-banner" role="alert" hidden></div>
+    <section class="summary" aria-label="基础设施概览">
+      <article id="health-card" class="summary-card health-card" data-health="loading"><div class="metric-label">节点状态 <span id="health-label" class="health-label" role="status">等待数据</span></div><div class="metric-number"><span id="online-count">—</span><span class="denominator" id="total-count"> / —</span></div><div class="summary-note health-note"><span class="health-dot" aria-hidden="true"></span><span id="online-note">正在获取节点状态</span></div><div class="heartbeat-row"><svg id="heartbeat" viewBox="0 0 100 24" aria-hidden="true"><path id="heartbeat-path" d="M0 12H100" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="heartbeat-text">等待节点上报</span></div><div id="online-trend" class="mini-chart"></div></article>
+      <article class="summary-card"><div class="metric-label">平均 CPU <span class="metric-icon purple">⌘</span></div><div class="metric-number" id="avg-cpu">—</div><div class="summary-note">在线节点的平均使用率</div><div id="cpu-trend" class="mini-chart"></div></article>
+      <article class="summary-card"><div class="metric-label">内存使用 <span class="metric-icon blue">▤</span></div><div class="metric-number" id="memory-percent">—</div><div class="summary-note" id="memory-total">在线节点已用 / 总量</div><div id="memory-trend" class="mini-chart"></div></article>
+      <article class="summary-card"><div class="metric-label">覆盖地区 <span class="metric-icon amber">◎</span></div><div class="metric-number"><span id="regions-count">—</span><span class="denominator"> 个地区</span></div><div id="regions" class="summary-note">等待节点数据</div><div class="region-activity"><span class="orbit-dot"></span><span id="region-note">正在建立全球视野</span></div></article>
+    </section>
+    <section class="observatory" aria-label="全球节点与实时趋势">
+      <article class="globe-panel">
+        <div class="panel-heading"><div><p class="eyebrow">CONNECTED AROUND THE WORLD</p><h2>节点分布</h2></div><button id="globe-motion" class="soft-button" aria-pressed="true">暂停旋转</button></div>
+        <div class="globe-content"><div class="globe-stage"><canvas id="globe" tabindex="0" aria-label="可旋转的节点地区地球">节点地区的地球示意图，具体列表在右侧。</canvas><span class="globe-hint">拖动旋转 · 点击地区定位</span></div><div id="region-list" class="region-list"></div></div>
+        <p class="map-note"><span class="small-dot"></span> 在线点亮 <span class="map-offline"></span> 离线暗显 <span>按国家 / 地区示意，非机房精确位置</span></p>
+      </article>
+      <article class="live-panel">
+        <div class="panel-heading"><div><p class="eyebrow">EVERY SECOND COUNTS</p><h2>实时网络</h2></div><select id="live-window" aria-label="实时趋势时间范围"><option value="60">最近 60 秒</option><option value="300">最近 5 分钟</option></select></div>
+        <div class="live-reading"><div><span><i class="legend blue-line"></i> 上传</span><strong id="live-up">—</strong></div><div><span><i class="legend violet-line"></i> 下载</span><strong id="live-down">—</strong></div></div>
+        <div id="live-chart" class="plot live-plot"></div><p class="inspect-hint">悬停预览排行 · 点击曲线固定查看</p><section id="traffic-ranking" class="traffic-ranking" aria-label="选中采样的流量排行" hidden><div class="ranking-heading"><h3 id="ranking-title">节点流量排行</h3><button id="ranking-close" class="soft-button">收起</button></div><p id="ranking-note"></p><div id="ranking-lists" class="ranking-lists"></div><button id="ranking-all" class="soft-button">显示全部节点</button></section><div class="trend-foot"><span id="trend-note">等待真实采样</span><span id="trend-peak">峰值 —</span></div>
+      </article>
+    </section>
+    <section class="nodes-section" aria-labelledby="nodes-heading">
+      <div class="section-heading"><div><h2 id="nodes-heading">节点一览 <span id="visible-count" class="count-pill">—</span></h2><p>按名称、分组或在线状态查找节点。</p></div><span class="updated" id="updated">尚未更新</span></div>
+      <p class="usage-legend"><span class="usage-ok">● 正常 &lt;70%</span><span class="usage-warn">● 偏高 70–89%</span><span class="usage-critical">● 高占用 ≥90%</span></p><div class="toolbar"><div class="segments" role="group" aria-label="按状态筛选"><button data-filter="all" aria-pressed="true">全部节点</button><button data-filter="online" aria-pressed="false">在线 <span id="filter-online">—</span></button><button data-filter="offline" aria-pressed="false">离线 <span id="filter-offline">—</span></button></div><div class="tools"><label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="搜索名称、地区或系统" aria-label="搜索节点"><kbd>/</kbd></label><select id="group" aria-label="按分组筛选"><option value="">所有分组</option></select><select id="sort" aria-label="排序方式"><option value="default">默认排序</option><option value="cpu">CPU 从高到低</option><option value="name">名称排序</option></select></div></div>
+      <div id="cards" class="cards" aria-busy="true"><div class="empty">正在加载你的基础设施…</div></div>
+    </section>
+    <footer><span><span class="small-dot"></span> 监控数据每 5 秒自动更新</span><span>Komari <span id="version">1.5+</span><span class="footer-divider">/</span>Aero · 晴空</span></footer>
+  </main>
+</div>
+<p id="route-loading">正在读取节点数据…</p><section id="route-error" hidden><h1>未找到节点</h1><p>节点不存在、已删除或当前无权查看。</p><a href="/">返回总览</a></section><main id="detail" aria-labelledby="detail-title" hidden>
+  <div class="dialog-heading"><div><p class="eyebrow">NODE INSIGHTS <span id="detail-status" class="badge"></span></p><h1 id="detail-title"></h1><p id="detail-subtitle" class="detail-subtitle"></p></div><a class="back-overview soft-button" href="/">← 返回总览</a></div>
+  <div id="detail-error" class="error-banner" role="alert" hidden></div>
+  <section id="pane-overview" aria-label="运行概况" class="detail-section"><div id="detail-live" class="detail-live"></div><div class="detail-columns"><section><h3>系统与硬件</h3><dl id="detail-info" class="spec-list"></dl></section><section><h3>运行与连接</h3><dl id="detail-runtime" class="spec-list"></dl></section></div><div id="detail-extra" class="detail-extra"></div></section>
+  <section id="pane-history" aria-labelledby="history-section-title" class="detail-section"><h2 id="history-section-title" class="detail-section-title">历史趋势</h2><div class="chart-heading"><div><h3 id="history-title">CPU 使用率</h3><p id="history-explanation" class="chart-note">服务端持久化历史数据</p></div><div class="history-tools"><select id="history-metric" aria-label="历史指标"><option value="cpu">CPU 使用率</option><option value="ram">内存用量</option><option value="disk">磁盘用量</option><option value="swap">交换空间</option><option value="network">网络速率</option><option value="load">系统负载</option><option value="process">进程数</option><option value="connections">TCP / UDP 连接</option></select><select id="history-hours" aria-label="历史时间范围"><option value="1">最近 1 小时</option><option value="6">最近 6 小时</option><option value="24">最近 24 小时</option><option value="168">最近 7 天</option></select><button id="history-retry" class="soft-button">刷新</button></div></div><div id="history-stats" class="history-stats"></div><div id="history" class="plot history" aria-live="polite"></div><p class="chart-note">移动指针或使用左右方向键查看采样值。缺失数据保留为空，容量历史以实际用量展示。</p></section>
+  <section id="pane-network" aria-labelledby="network-section-title" class="detail-section"><h2 id="network-section-title" class="detail-section-title">网络质量</h2><div class="chart-heading"><div><h3>延迟与丢包</h3><p class="chart-note">来自已配置的探测任务，不以流量推算连通性。</p></div><div class="history-tools"><select id="ping-hours" aria-label="网络质量时间范围"><option value="1">最近 1 小时</option><option value="6">最近 6 小时</option><option value="24">最近 24 小时</option></select><button id="ping-retry" class="soft-button">刷新</button></div></div><div id="ping-results" aria-live="polite"></div></section>
+  <div class="detail-footer"><span id="detail-freshness">—</span><span>真实监控数据 · 5 秒同步</span></div>
+</main>
+<aside id="node-peek" class="floating-peek" role="tooltip" hidden></aside>
+</body>
+</html>

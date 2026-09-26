@@ -1,0 +1,10 @@
+{
+  "name": "komari-theme-aero",
+  "version": "1.4.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node test.mjs",
+    "preview": "node preview.mjs"
+  }
+}
