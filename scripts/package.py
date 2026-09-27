@@ -2,7 +2,6 @@
 import hashlib
 import json
 import os
-import re
 from pathlib import Path
 import zipfile
 
@@ -23,21 +22,28 @@ files += sorted(p for p in (root / "dist").rglob("*") if p.is_file())
 with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as z:
     for file in files:
         assert not file.is_symlink(), "Symlinks are not allowed"
-        entry = zipfile.ZipInfo(file.relative_to(root).as_posix(), (2026, 1, 1, 0, 0, 0))
+        name = file.relative_to(root).as_posix()
+        if name.startswith("dist/assets/"):
+            name = name.replace("dist/assets/", "dist/assets/v" + manifest["version"] + "/", 1)
+        entry = zipfile.ZipInfo(name, (2026, 1, 1, 0, 0, 0))
         entry.compress_type = zipfile.ZIP_DEFLATED
         entry.external_attr = 0o100644 << 16
         content = file.read_bytes()
-        if file.suffix in {".html", ".js"}:
-            pattern = r"((?:/themes/aero/dist/assets/|\./)[A-Za-z0-9._-]+\.(?:js|css|json))([\"'])"
-            content = re.sub(pattern, lambda m: m[1] + "?v=" + manifest["version"] + m[2], content.decode("utf-8")).encode("utf-8")
+        if file.suffix == ".html":
+            content = content.decode("utf-8").replace("/themes/aero/dist/assets/", "/themes/aero/dist/assets/v" + manifest["version"] + "/").encode("utf-8")
+        assert b"file:///" not in content if file.suffix in {".html", ".js", ".css"} else True
         z.writestr(entry, content)
 with zipfile.ZipFile(archive) as z:
     assert z.testzip() is None
     assert "dist/index.html" in z.namelist()
     version = manifest["version"]
-    assert f"app.js?v={version}" in z.read("dist/index.html").decode()
-    assert f"./data.js?v={version}" in z.read("dist/assets/app.js").decode()
-    assert f"./earth.json?v={version}" in z.read("dist/assets/globe.js").decode()
+    html = z.read("dist/index.html").decode()
+    assert f"/assets/v{version}/app.js" in html
+    assert f"/assets/v{version}/appearance.js" in html
+    assert f"/assets/v{version}/style.css" in html
+    for asset in ("app.js", "data.js", "globe.js", "charts.js", "earth.json", "appearance.js", "style.css"):
+        assert f"dist/assets/v{version}/{asset}" in z.namelist()
+    assert not any(n.startswith("dist/assets/") and not n.startswith(f"dist/assets/v{version}/") for n in z.namelist())
     assert json.loads(z.read("komari-theme.json"))["version"] == manifest["version"]
 digest = hashlib.sha256(archive.read_bytes()).hexdigest()
 (output / "aero.zip.sha256").write_text(digest + "  aero.zip\n", encoding="utf-8")
