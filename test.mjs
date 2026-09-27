@@ -62,3 +62,18 @@ chartElement.onpointerdown({clientX:200,clientY:120,pointerType:'mouse',type:'po
 chartElement.onpointerdown({clientX:200,clientY:120,pointerType:'touch',type:'pointerdown'});assert.equal(events.at(-1).pin,true);
 chartElement.onkeydown({key:'ArrowLeft',preventDefault(){}});assert.equal(events.at(-1).pin,true);
 console.log('PASS: hovering previews, clicking/touching/keyboard inspection pins');
+
+const earth=JSON.parse(readFileSync(new URL('./dist/assets/earth.json',import.meta.url),'utf8'));assert.ok(earth.land.filter(p=>p[1]<-65).length>100);assert.ok(earth.land.some(([lon,lat])=>lat<-80&&projectGlobe(lon,lat,0,-85).z>0));
+console.log('PASS: Antarctic land at polar view');
+
+import {curvePoint} from './dist/assets/data.js';
+assert.deepEqual(curvePoint({x:0,y:0},{x:10,y:0},{x:5,y:10},0),{x:0,y:0});assert.deepEqual(curvePoint({x:0,y:0},{x:10,y:0},{x:5,y:10},1),{x:10,y:0});assert.deepEqual(curvePoint({x:0,y:0},{x:10,y:0},{x:5,y:10},.5),{x:5,y:5});
+console.log('PASS: packet animation curve endpoints and midpoint');
+
+import {packetPhase} from './dist/assets/data.js';
+assert.deepEqual(packetPhase(0),{progress:0,opacity:1,done:false});assert.equal(packetPhase(900).progress,.5);assert.equal(packetPhase(1800).opacity,1);assert.equal(packetPhase(2050).opacity,.5);assert.deepEqual(packetPhase(2300),{progress:1,opacity:0,done:true});assert.equal(packetPhase(5000).opacity,0);
+console.log('PASS: packet travels, arrives, fades, and fully disappears');
+
+import {regionCoverage} from './dist/assets/data.js';
+assert.deepEqual(regionCoverage([{region:'HK'},{region:'HK'},{region:'JP'}],['HK','JP','US','AQ']),{total:4,lit:2,unlit:2});assert.deepEqual(regionCoverage([],['HK','JP']),{total:2,lit:0,unlit:2});assert.deepEqual(regionCoverage([{region:'SG'}],['HK']),{total:2,lit:1,unlit:1});
+await import('./test-globe.mjs');

@@ -98,3 +98,8 @@ dialog{width:min(1060px,calc(100vw - 48px));max-height:90dvh;border-radius:26px;
 #traffic-ranking[data-pinned=false]{pointer-events:none}#traffic-ranking[data-pinned=true]{pointer-events:auto}#traffic-ranking[data-pinned=false] #ranking-close,#traffic-ranking[data-pinned=false] #ranking-all{display:none!important}
 
 .theme-credit{display:inline-flex;align-items:center;flex-wrap:wrap;gap:6px}.theme-credit a{color:inherit;text-decoration:underline;text-underline-offset:3px}.theme-credit a:hover{color:var(--blue,#007aff)}.detail-footer{flex-wrap:wrap;gap:10px}
+
+/* Keep fleet summaries bounded regardless of region count. */
+.health-distribution{display:flex;height:8px;border-radius:8px;overflow:hidden;background:var(--line);margin-top:14px;gap:2px}.health-distribution span{transition:width .3s ease;min-width:0}#health-online{background:#22976b}#health-offline{background:#d35464}#health-stale{background:#bd781d}.health-card:is([data-health=healthy],[data-health=degraded],[data-health=stale]) #online-count{color:#15815e}[data-appearance=dark] .health-card:is([data-health=healthy],[data-health=degraded],[data-health=stale]) #online-count{color:#83dfb6}.health-note{line-height:1.6}.region-activity{margin-top:8px}.region-list button{min-width:0}.region-list button>span:nth-child(2){min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.region-list strong{flex-shrink:0}@media(prefers-reduced-motion:reduce){.health-distribution span{transition:none}}
+
+.coverage-bar{margin-top:24px}#coverage-lit{background:#0071e3}#coverage-unlit{background:#9da9b8}

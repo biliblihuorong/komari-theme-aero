@@ -1,4 +1,4 @@
-import {finite,percent,bytes,stateOf,selectNodes,duration,escapeHTML as esc,aggregate,recentAggregate,regionCode,regionName,pingSummary,rankTraffic,fleetHealth,placePopover,usageLevel} from './data.js';
+import {finite,percent,bytes,stateOf,selectNodes,duration,escapeHTML as esc,aggregate,recentAggregate,regionCode,regionName,pingSummary,rankTraffic,fleetHealth,regionCoverage,placePopover,usageLevel} from './data.js';
 import {drawChart} from './charts.js';
 import {createGlobe} from './globe.js';
 const $=id=>document.getElementById(id),labels={online:'在线',offline:'离线',stale:'数据过期',loading:'等待数据'};
@@ -21,6 +21,8 @@ function card(n){const r=reports[n.uuid],state=stateOf(r),live=state==='online',
 function updateHealth(){
  const health=fleetHealth(nodes,reports,{lastSuccess,failed});$('health-card').dataset.health=health.state;
  text('health-label',health.title);text('online-note',health.note);
+ const known=!['loading','disconnected','empty'].includes(health.state);$('health-distribution').setAttribute('aria-label',health.note);for(const kind of ['online','offline','stale'])$('health-'+kind).style.width=known?`${health[kind]/nodes.length*100}%`:'0%';
+ const coverage=regionCoverage(nodes,globe?.regionCodes||[]),coverageKnown=!!globe&&!!lastSuccess;const coverageNote=coverageKnown?`${coverage.lit} 有节点 · ${coverage.unlit} 无节点`:'地区状态暂不可确认';text('coverage-note',coverageNote);$('coverage-bar').setAttribute('aria-label',coverageNote);for(const kind of ['lit','unlit'])$('coverage-'+kind).style.width=coverageKnown&&coverage.total?`${coverage[kind]/coverage.total*100}%`:'0%';
  const active=health.online>0&&['healthy','degraded','stale'].includes(health.state);
  $('heartbeat-path').setAttribute('d',active?'M0 12H25L31 8L38 17L46 2L54 22L61 9L67 12H100':'M0 12H100');
  text('heartbeat-text',health.state==='disconnected'?'同步中断，心跳暂停':active?(lastHeartbeat?`上报心跳 · ${Math.floor((Date.now()-lastHeartbeat)/1000)} 秒前`:'等待新的节点上报'):health.state==='offline'?'未收到在线节点心跳':'等待节点上报');
@@ -38,7 +40,7 @@ function render(){
  text('avg-cpu',finite(summary.cpu)?summary.cpu.toFixed(1)+'%':'—');$('avg-cpu').closest('article').dataset.usage=usageLevel(summary.cpu);$('memory-percent').closest('article').dataset.usage=usageLevel(summary.ram);
  text('memory-percent',finite(summary.ram)?summary.ram.toFixed(1)+'%':'—');text('memory-total',`${bytes(summary.ramUsed)} / ${bytes(summary.ramTotal)} · 在线节点`);
  for(const [id,key]of [['live-up','up'],['live-down','down']])text(id,finite(summary[key])?bytes(summary[key])+'/s':'—');
- text('regions-count',regions.length);text('regions',regions.map(regionName).join(' · '));text('region-note',`${summary.regions} 个地区当前已点亮`);
+ text('regions-count',regions.length);
  text('filter-online',summary.online);text('filter-offline',lastSuccess?nodes.length-summary.online:'—');
  const list=selectNodes(nodes,reports,{filter,search:$('search').value,group:$('group').value,sort:$('sort').value});text('visible-count',list.length);
  // Keep card anchors stable so hover, focus and native link actions survive polling.
@@ -53,7 +55,6 @@ function drawTrends(){
  drawChart($('live-chart'),rows,network,{...options,format:v=>bytes(v)+'/s',label:'实时网络速率',empty:'正在积累真实采样，首次数据即将到达',note:'5 秒采样',externalTooltip:true,onInspect:(row,pointer)=>{if(rankPinned&&!pointer?.pin)return;clearTimeout(rankHideTimer);rankPinned=!!pointer?.pin;rankPointer=pointer;inspectedSample=row;paintRanking();},onInspectEnd:()=>{if(!rankPinned)hideRanking();}});
  drawChart($('memory-trend'),rows,[{key:'ram',name:'内存',color:'#429a9c'}],{...options,max:100,mini:true,height:65,label:'在线节点内存使用趋势'});
  drawChart($('cpu-trend'),rows,[{key:'cpu',name:'CPU',color:'#8b79cf'}],{...options,mini:true,height:65,label:'CPU 短时趋势'});
- drawChart($('online-trend'),rows,[{key:'online',name:'在线节点',color:fleetHealth(nodes,reports,{lastSuccess,failed}).color}],{...options,max:Math.max(nodes.length,1),mini:true,height:65,label:'本次浏览的在线节点变化'});
  const times=rows.filter(r=>finite(r.up)).map(r=>r.t),peak=rows.flatMap(r=>[r.up,r.down]).filter(finite);
  text('trend-note',times.length>1?`${Math.min(seconds,Math.round((end-Math.min(...times))/1000))} 秒真实记录 · 当前在线节点汇总`:'正在积累采样 · 每 5 秒更新');text('trend-peak',peak.length?'峰值 '+bytes(Math.max(...peak))+'/s':'峰值 —');
 }
@@ -175,7 +176,7 @@ document.addEventListener('keydown',e=>{if(e.key==='/'&&!selected&&!['INPUT','TE
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
 function clock(){updateHealth();const now=new Date();text('clock',now.toLocaleTimeString('zh-CN',{hour12:false}));text('date',now.toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'long'}));text('updated',lastSuccess?`${failed?'上次成功同步':'最近更新'} · ${Math.max(0,Math.floor((Date.now()-lastSuccess)/1000))} 秒前`:'尚未更新');}
 async function init(){try{const [settings]=await Promise.all([request('/api/public'),loadNodes()]);const info=settings.data||{},s=info.theme_settings||{};text('site-name',info.sitename||'我的监测站');document.title=info.sitename||'晴空监测';text('headline',s.headline||'服务器状态');text('subtitle',s.subtitle||info.description||'实时查看节点资源与网络状态。');if(location.pathname.startsWith('/instance/'))openDetail(decodeURIComponent(location.pathname.slice(10)));await refresh();}catch(e){markError(e.message);if(location.pathname.startsWith('/instance/'))text('route-loading','加载失败，请刷新页面重试。');$('cards').innerHTML='<div class="empty">暂时无法读取节点，请稍后重试或进入控制台登录。</div>';$('cards').setAttribute('aria-busy','false');}request('/api/version').then(j=>text('version',j.data?.version||'1.5+')).catch(()=>{});}
-createGlobe($('globe'),$('region-list'),$('globe-motion')).then(g=>{globe=g;globe.update(nodes,reports);}).catch(()=>{text('region-list','地图资源加载失败，请刷新页面重试。');$('globe-motion').disabled=true;});
+createGlobe($('globe'),$('region-list'),$('globe-motion')).then(g=>{globe=g;globe.update(nodes,reports);updateHealth();}).catch(()=>{text('region-list','地图资源加载失败，请刷新页面重试。');$('globe-motion').disabled=true;});
 clock();setInterval(clock,1000);init();setInterval(()=>{if(!nodes.length){if(!document.hidden)loadNodes().then(refresh).catch(e=>markError(e.message));}else refresh();},5000);setInterval(()=>{if(!document.hidden)loadNodes().then(render).catch(()=>{});},60000);
 
 function syncAppearanceButtons(){document.querySelectorAll('[data-appearance-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.appearanceMode===window.aeroAppearance.mode)));}document.querySelectorAll('[data-appearance-mode]').forEach(b=>b.onclick=()=>{window.aeroAppearance.set(b.dataset.appearanceMode);syncAppearanceButtons();});syncAppearanceButtons();$('site-avatar').onerror=()=>{$('site-avatar').hidden=true;};

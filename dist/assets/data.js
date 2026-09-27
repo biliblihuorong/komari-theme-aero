@@ -45,3 +45,10 @@ export function fleetHealth(nodes,reports,{lastSuccess=0,failed=false,now=Date.n
 export function placePopover(anchor,size,viewport){const pad=12;let left=anchor.right+pad;if(left+size.width>viewport.width-pad)left=anchor.left-size.width-pad;left=Math.max(pad,Math.min(left,viewport.width-size.width-pad));const top=Math.max(pad,Math.min(anchor.top,viewport.height-size.height-pad));return {left,top};}
 
 export function usageLevel(value){return !finite(value)||value<0?'unknown':value>=90?'critical':value>=70?'warn':'ok';}
+
+
+export function curvePoint(a,b,c,t){const u=1-t;return {x:u*u*a.x+2*u*t*c.x+t*t*b.x,y:u*u*a.y+2*u*t*c.y+t*t*b.y};}
+
+export function packetPhase(elapsed){return {progress:Math.max(0,Math.min(1,elapsed/1800)),opacity:Math.max(0,Math.min(1,(2300-elapsed)/500)),done:elapsed>=2300};}
+
+export function regionCoverage(nodes,mapCodes){const covered=new Set(nodes.map(n=>regionCode(n.region)).filter(Boolean)),all=new Set([...mapCodes,...covered]);return {total:all.size,lit:covered.size,unlit:all.size-covered.size};}
