@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import zipfile
 
@@ -25,10 +26,18 @@ with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as z:
         entry = zipfile.ZipInfo(file.relative_to(root).as_posix(), (2026, 1, 1, 0, 0, 0))
         entry.compress_type = zipfile.ZIP_DEFLATED
         entry.external_attr = 0o100644 << 16
-        z.writestr(entry, file.read_bytes())
+        content = file.read_bytes()
+        if file.suffix in {".html", ".js"}:
+            pattern = r"((?:/themes/aero/dist/assets/|\./)[A-Za-z0-9._-]+\.(?:js|css|json))([\"'])"
+            content = re.sub(pattern, lambda m: m[1] + "?v=" + manifest["version"] + m[2], content.decode("utf-8")).encode("utf-8")
+        z.writestr(entry, content)
 with zipfile.ZipFile(archive) as z:
     assert z.testzip() is None
     assert "dist/index.html" in z.namelist()
+    version = manifest["version"]
+    assert f"app.js?v={version}" in z.read("dist/index.html").decode()
+    assert f"./data.js?v={version}" in z.read("dist/assets/app.js").decode()
+    assert f"./earth.json?v={version}" in z.read("dist/assets/globe.js").decode()
     assert json.loads(z.read("komari-theme.json"))["version"] == manifest["version"]
 digest = hashlib.sha256(archive.read_bytes()).hexdigest()
 (output / "aero.zip.sha256").write_text(digest + "  aero.zip\n", encoding="utf-8")

@@ -2,7 +2,7 @@
   "name": "Aero · 晴空",
   "short": "aero",
   "description": "Apple 风格浅色监控主题，含动态地球、实时双向流量趋势、完整服务器详情、多指标历史和线路质量。适配 Komari 1.5.1。",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "author": "Shell (biliblihuorong)",
   "configuration": {
     "type": "managed",
