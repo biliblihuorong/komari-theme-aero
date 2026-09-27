@@ -96,3 +96,5 @@ dialog{width:min(1060px,calc(100vw - 48px));max-height:90dvh;border-radius:26px;
 @media(max-width:420px){.top-actions .connection{order:4;flex-basis:100%;text-align:right}.appearance-switch button{width:40px;height:40px}.top-actions{justify-content:space-between}}
 
 #traffic-ranking[data-pinned=false]{pointer-events:none}#traffic-ranking[data-pinned=true]{pointer-events:auto}#traffic-ranking[data-pinned=false] #ranking-close,#traffic-ranking[data-pinned=false] #ranking-all{display:none!important}
+
+.theme-credit{display:inline-flex;align-items:center;flex-wrap:wrap;gap:6px}.theme-credit a{color:inherit;text-decoration:underline;text-underline-offset:3px}.theme-credit a:hover{color:var(--blue,#007aff)}.detail-footer{flex-wrap:wrap;gap:10px}

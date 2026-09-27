@@ -22,6 +22,12 @@ const rootElement={dataset:{},style:{}};let savedAppearance=null;
 const appearanceContext={location:{pathname:'/'},matchMedia:()=>systemAppearance,document:{documentElement:rootElement,querySelector:()=>({setAttribute(){}})},localStorage:{getItem:()=>savedAppearance,setItem:(_,value)=>savedAppearance=value},window:{dispatchEvent(){}},Event};
 runInNewContext(readFileSync(new URL('./dist/assets/appearance.js',import.meta.url),'utf8'),appearanceContext);
 assert.equal(rootElement.dataset.appearance,'light');systemAppearance.matches=true;systemAppearance.listener();assert.equal(rootElement.dataset.appearance,'dark');appearanceContext.window.aeroAppearance.set('light');systemAppearance.listener();assert.equal(rootElement.dataset.appearance,'light');appearanceContext.window.aeroAppearance.set('auto');assert.equal(rootElement.dataset.appearance,'dark');assert.equal(savedAppearance,'auto');
+systemAppearance.matches=false;systemAppearance.listener();assert.equal(rootElement.dataset.appearance,'light');
+appearanceContext.window.aeroAppearance.set('dark');systemAppearance.listener();assert.equal(rootElement.dataset.appearance,'dark');
+runInNewContext(readFileSync(new URL('./dist/assets/appearance.js',import.meta.url),'utf8'),appearanceContext);assert.equal(rootElement.dataset.appearance,'dark');assert.equal(appearanceContext.window.aeroAppearance.mode,'dark');
+appearanceContext.window.aeroAppearance.set('auto');assert.equal(rootElement.dataset.appearance,'light');
+systemAppearance.matches=true;systemAppearance.listener();assert.equal(rootElement.dataset.appearance,'dark');
+runInNewContext(readFileSync(new URL('./dist/assets/appearance.js',import.meta.url),'utf8'),appearanceContext);assert.equal(appearanceContext.window.aeroAppearance.mode,'auto');assert.equal(rootElement.dataset.appearance,'dark');
 console.log('PASS: automatic system appearance, manual override, and preference persistence');
 
 import {rankTraffic} from './dist/assets/data.js';
