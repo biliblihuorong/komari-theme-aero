@@ -15,6 +15,31 @@ assert.equal(recentAggregate(cohort,now).at(-1).up,40);assert.equal(recentAggreg
 const geo=chartGeometry([{t:0,x:10},{t:1000,x:null},{t:2000,x:20},{t:10000,x:30}],[{key:'x'}],{gap:3000});assert.equal((geo.paths[0].match(/M/g)||[]).length,3);assert.ok(!geo.paths[0].includes('NaN'));
 console.log('PASS: globe projection, region parsing, complete-cohort aggregation, packet loss, and chart gaps');
 
+const pingPath=rows=>chartGeometry(rows,[{key:'latency'}],{gap:'auto'}).paths[0];
+const commands=path=>path.match(/[ML]/g)||[];
+for(const [hours,interval] of [[1,60000],[6,60000],[24,300000]]){
+ const rows=Array.from({length:hours*3600000/interval+1},(_,i)=>({t:now+i*interval,latency:30+i%5}));
+ const path=pingPath(rows.toReversed()); // The ping API returns newest first.
+ assert.deepEqual(commands(path),['M',...Array(rows.length-1).fill('L')],`${hours}h ping samples should form a continuous line`);
+}
+// A missing 5-minute bucket must still break the line between its neighbours.
+const sparsePings=[0,1,2,4,5,6].map(i=>({t:now+i*300000,latency:40}));
+assert.deepEqual(commands(pingPath(sparsePings)),['M','L','L','M','L','L']);
+// Occasional long outages must not become the inferred sampling cadence.
+const outagePings=[0,1,2,3,15,16,17,18].map(i=>({t:now+i*300000,latency:40}));
+assert.deepEqual(commands(pingPath(outagePings)),['M','L','L','L','M','L','L','L']);
+for(const missing of [null,-1]){
+ const rows=[40,41,missing,43,44].map((latency,i)=>({t:now+i*300000,latency}));
+ assert.deepEqual(commands(pingPath(rows)),['M','L','M','L'],'failed and missing probes must remain gaps');
+}
+const duplicatePings=[0,0,1,1,2,2,4].map(i=>({t:now+i*300000,latency:40}));
+assert.deepEqual(commands(pingPath([...duplicatePings,{t:NaN,latency:40}])),['M','L','L','L','L','L','M']);
+assert.equal(pingPath([]),'');assert.equal(pingPath([{t:now,latency:null}]),'');
+assert.deepEqual(commands(pingPath([{t:now,latency:40}])),['M']);
+// Keep the existing three-minute tolerance for ordinary one-minute probes.
+assert.deepEqual(commands(pingPath([0,1,4,5,9,10].map(i=>({t:now+i*60000,latency:40})))),['M','L','L','L','M','L']);
+console.log('PASS: adaptive ping cadence for 1h/6h/24h, missing buckets, outages, failed probes, and sparse input');
+
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 const systemAppearance={matches:false,addEventListener(_,handler){this.listener=handler;}};

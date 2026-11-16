@@ -3,6 +3,13 @@ import {finite,escapeHTML as esc} from './data.js';
 // A single renderer for live and historical charts. Gaps remain gaps.
 export function chartGeometry(rows, series, {start,end,max,gap=Infinity,width=600,height=180}={}) {
   const points=rows.filter(r=>finite(r.t)).toSorted((a,b)=>a.t-b.t);
+  if(gap==='auto'){
+    // Historical APIs may downsample each task. Infer cadence from timestamps,
+    // using the lower quartile so occasional outages do not inflate the gap.
+    const intervals=points.slice(1).map((r,i)=>r.t-points[i].t).filter(d=>d>0).sort((a,b)=>a-b);
+    const cadence=intervals[Math.floor((intervals.length-1)/4)]||60000;
+    gap=Math.max(180000,cadence*1.5);
+  }
   start ??= points[0]?.t ?? 0; end ??= points.at(-1)?.t ?? start+1;
   const values=points.flatMap(r=>series.map(s=>r[s.key])).filter(v=>finite(v)&&v>=0);
   const ceiling=max??Math.max(1,...values)*1.15;
